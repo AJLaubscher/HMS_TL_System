@@ -1,4 +1,4 @@
-namespace HMS_API.Dtos.sumission;
+namespace HMS_API.Dtos.submission;
 
 public record class SubmissionSummaryDto
 (
