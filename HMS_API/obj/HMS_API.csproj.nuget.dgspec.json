@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Andre\\Documents\\BSc IT\\01_Third year\\01_Second Semester\\CMPG_323\\Projects\\GitHubRepositories\\HMS_TL_System\\HMS_API\\HMS_API.csproj": {}
+    "C:\\Users\\Chris\\HMS_TL_System\\HMS_API\\HMS_API.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Andre\\Documents\\BSc IT\\01_Third year\\01_Second Semester\\CMPG_323\\Projects\\GitHubRepositories\\HMS_TL_System\\HMS_API\\HMS_API.csproj": {
+    "C:\\Users\\Chris\\HMS_TL_System\\HMS_API\\HMS_API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Andre\\Documents\\BSc IT\\01_Third year\\01_Second Semester\\CMPG_323\\Projects\\GitHubRepositories\\HMS_TL_System\\HMS_API\\HMS_API.csproj",
+        "projectUniqueName": "C:\\Users\\Chris\\HMS_TL_System\\HMS_API\\HMS_API.csproj",
         "projectName": "HMS_API",
-        "projectPath": "C:\\Users\\Andre\\Documents\\BSc IT\\01_Third year\\01_Second Semester\\CMPG_323\\Projects\\GitHubRepositories\\HMS_TL_System\\HMS_API\\HMS_API.csproj",
-        "packagesPath": "C:\\Users\\Andre\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Andre\\Documents\\BSc IT\\01_Third year\\01_Second Semester\\CMPG_323\\Projects\\GitHubRepositories\\HMS_TL_System\\HMS_API\\obj\\",
+        "projectPath": "C:\\Users\\Chris\\HMS_TL_System\\HMS_API\\HMS_API.csproj",
+        "packagesPath": "C:\\Users\\Chris\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Chris\\HMS_TL_System\\HMS_API\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Andre\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Chris\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
