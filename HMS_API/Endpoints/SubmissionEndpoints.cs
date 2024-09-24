@@ -27,6 +27,11 @@ public static class SubmissionEndpoints
             // get a specific submission
             submission.MapGet("/{id}", async (int id, HMS_Context db) => {
 
+            if(id < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(id), "The id must be greater than 0!");
+            }
+
                 Submission? submission = await db.Submissions.FindAsync(id); // find id in db
 
                 return submission is null? Results.NotFound() : Results.Ok(submission.ToSubmissionDetailsDto()); // if null return not found/ return ok if found

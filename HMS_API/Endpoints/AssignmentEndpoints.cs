@@ -26,6 +26,11 @@ public static class AssignmentEndpoints
             // get a specific enrollment
             assignment.MapGet("/{id}", async (int id, HMS_Context db) => {
 
+            if(id < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(id), "The id must be greater than 0!");
+            }
+
                Assignment? assignment = await db.Assignments.FindAsync(id); // find id in db
 
                 return assignment is null? Results.NotFound() : Results.Ok(assignment.ToAssignmentDetailsDto()); // if null return not found/ return ok if found

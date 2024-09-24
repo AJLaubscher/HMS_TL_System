@@ -28,6 +28,11 @@ public static class FeedbackEndpoints
 
         //getfeed
         feedback.MapGet("/{id}", async (int id, HMS_Context db) => {
+
+            if(id < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(id), "The id must be greater than 0!");
+            }
             
             Feedback? feedback = await db.Feedbacks.FindAsync(id);
 
