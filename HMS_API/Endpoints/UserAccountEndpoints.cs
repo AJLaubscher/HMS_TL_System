@@ -24,6 +24,11 @@ public static class UserAccountEndpoints
         // get a specific User > pass user id
         user.MapGet("/{id}", async (int id, HMS_Context db) => {
 
+        if(id < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(id), "The id must be greater than 0!");
+        }
+
         UserAccount? user = await db.UserAccounts.FindAsync(id);                // find id in db
 
         return user is null? Results.NotFound() : 

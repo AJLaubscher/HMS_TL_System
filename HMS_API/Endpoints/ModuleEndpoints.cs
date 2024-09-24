@@ -26,6 +26,11 @@ public static class ModuleEndpoints
             // get a specific module
             module.MapGet("/{id}", async (int id, HMS_Context db) => {
 
+            if(id < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(id), "The id must be greater than 0!");
+            }
+
                Module? module = await db.Modules.FindAsync(id); // find id in db
 
                 return module is null? Results.NotFound() : Results.Ok(module.ToModuleDetailsDto()); // if null return not found/ return ok if found
