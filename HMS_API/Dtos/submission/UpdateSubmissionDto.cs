@@ -1,14 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace HMS_API.Dtos.submission;
 
 public record class UpdateSubmissionDto
 (
 	// int Id
-	int StudID,
-	int AssignID,
-	DateOnly SubDate,
+	[Required] int StudID,
+	[Required] int AssignID,
+	[Required] DateOnly SubDate,
 	string FilePath,
 	int Marked,
 	//DateOnly Created,
-	DateOnly Modified,
+	[Required] DateOnly Modified,
 	int Deleted
 );
