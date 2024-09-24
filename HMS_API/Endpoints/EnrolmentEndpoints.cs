@@ -27,6 +27,11 @@ public static class EnrolmentEndpoints
             // get a specific enrollment
             enrolment.MapGet("/{modId}/{studId}", async (int modId, int studId, HMS_Context db) => {
 
+            if((modId < 1) || (studId < 1))
+            {
+                throw new ArgumentOutOfRangeException(nameof(modId), nameof(studId), "Both id's of composite key must be greater than 0!");
+            }
+
                Enrolment? enrolment = await db.Enrolments.FindAsync(modId, studId); // find id in db
 
                 return enrolment is null? Results.NotFound() : Results.Ok(enrolment.ToEnrolmentDetailsDto()); // if null return not found/ return ok if found
