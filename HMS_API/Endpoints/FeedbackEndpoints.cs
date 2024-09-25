@@ -4,100 +4,136 @@ using HMS_API.Dtos.feedback;
 using HMS_API.Entities;
 using HMS_API.Mapping;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace HMS_API.Endpoints;
 
-public static class FeedbackEndpoints
+public class FeedbackEndpoints
 {
     const string GetFeedbackEndpointName = "GetFeedback";
+    private readonly ILogger<FeedbackEndpoints> logger;
 
-    public static RouteGroupBuilder MapFeedbackEndpoints(this WebApplication app)
+    // Constructor for Dependency Injection
+    public FeedbackEndpoints()
+    {
+            logger = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+            }).CreateLogger<FeedbackEndpoints>();
+    }
+
+    public RouteGroupBuilder MapFeedbackEndpoints(WebApplication app)
     {
         var feedback = app.MapGroup("feedback")
-                            .WithParameterValidation();
+                          .WithParameterValidation();
 
-            // requests for feedback
+        // Requests for feedback
         feedback.MapGet("/", async (HMS_Context db) => 
-            await db.Feedbacks
-            .Include(feedback => feedback.Submission)                   // include submission entity to get info as in DTO
-            .Include(feedback => feedback.UserAccount)                 // include user entity to get info as in DTO
-            .Select(feedback => feedback.ToFeedbackSummaryDto()) 
-            .AsNoTracking()                                 // optimize qeury 
-            .ToListAsync()
-        );                               
-
-        //getfeed
-        feedback.MapGet("/{id}", async (int id, HMS_Context db) => {
-
-            if(id < 1)
+        {
+            try
             {
-                throw new ArgumentOutOfRangeException(nameof(id), "The id must be greater than 0!");
-            }
-            
-            Feedback? feedback = await db.Feedbacks.FindAsync(id);
+                var feedbacks = await db.Feedbacks
+                    .Include(f => f.Submission) // Include submission entity to get info as in DTO
+                    .Include(f => f.UserAccount) // Include user entity to get info as in DTO
+                    .Select(f => f.ToFeedbackSummaryDto())
+                    .AsNoTracking() // Optimize query
+                    .ToListAsync();
 
-            // Return NotFound if the assignment is null, otherwise return Ok
-            return feedback is null ? Results.NotFound() : Results.Ok(feedback.ToFeedbackDetailsDto());
+                logger.LogInformation("Successfully fetched {count} feedbacks.", feedbacks.Count);
+                return Results.Ok(feedbacks);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to fetch feedbacks/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                return Results.Problem("An error occurred while retrieving feedbacks.");
+            }
+        });
+
+        // Get specific feedback
+        feedback.MapGet("/{id}", async (int id, HMS_Context db) => 
+        {
+            try
+            {
+                Feedback? feedback = await db.Feedbacks.FindAsync(id);
+
+                return feedback is null ? Results.NotFound() : Results.Ok(feedback.ToFeedbackDetailsDto());
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to fetch feedback with ID {Id}/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                return Results.Problem("An error occurred while retrieving feedback.");
+            }
         }).WithName(GetFeedbackEndpointName);
 
-        // post feedback / add HMS_Context db as parameter for db mapping
-        feedback.MapPost("/", async (CreateFeedbackDto newFeedback, HMS_Context db) => {
-
-            Feedback feedback = newFeedback.ToEntity();
-
-            db.Feedbacks.Add(feedback);
-            await db.SaveChangesAsync();
-
-            return Results.CreatedAtRoute(GetFeedbackEndpointName, new {id = feedback.Id}, feedback.ToFeedbackDetailsDto());
-
-        }).WithParameterValidation();
-
-
-        // Put = update assignment
-            feedback.MapPut("/{id}", async (int id, UpdateFeedbackDto updateFeedback, HMS_Context db) =>{
-
-                var existingFeedback = await db.Feedbacks.FindAsync(id);
-
-                if(existingFeedback == null) // feedback does not exist
-                {
-                    return Results.NotFound();
-                }
-
-                db.Entry(existingFeedback).CurrentValues.SetValues(updateFeedback.ToEntity(id)); // set updated values in database
-
+        // Post feedback
+        feedback.MapPost("/", async (CreateFeedbackDto newFeedback, HMS_Context db) => 
+        {
+            try
+            {
+                Feedback feedback = newFeedback.ToEntity();
+                db.Feedbacks.Add(feedback);
                 await db.SaveChangesAsync();
 
-                return Results.NoContent(); // updated
-            });
+                logger.LogInformation("Feedback successfully created with ID {Id}/ Date/Time: {dateTime}.", feedback.Id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                return Results.CreatedAtRoute(GetFeedbackEndpointName, new { id = feedback.Id }, feedback.ToFeedbackDetailsDto());
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to create feedback.");
+                return Results.Problem("An error occurred while creating feedback.");
+            }
+        }).WithParameterValidation();
 
-            // other code if the above does not work
-            // Put = update feedback
-            // feedback.MapPut("/{id}", async (int id, UpdateFeedbackDto updateFeedback, HMS_Context db) =>
-            // {
-            //     var existingFeedback = await db.Feedbacks.FindAsync(id);
+        // Put = update feedback
+        feedback.MapPut("/{id}", async (int id, UpdateFeedbackDto updateFeedback, HMS_Context db) => 
+        {
+                var existingFeedback = await db.Feedbacks.FindAsync(id);
 
-            //     if (existingFeedback == null) // feedback does not exist
-            //     {
-            //         return Results.NotFound();
-            //     }
+                if (existingFeedback == null) // Feedback must exst
+                {
+                    logger.LogWarning("Feedback with ID {id} not found for update/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                    return Results.NotFound();
+                }
+            try
+            {
+                // change date on modified
+                var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                existingFeedback.Modified = currentDate;
 
-            //     // Explicitly map fields
-            //     existingFeedback.Comment = updateFeedback.Comment; // Assuming Comment is a field
-            //     existingFeedback.Modified = DateTime.UtcNow;       // Set modified date
+                db.Entry(existingFeedback).CurrentValues.SetValues(updateFeedback.ToEntity(id)); // Set updated values in database
+                await db.SaveChangesAsync();
 
-            //     await db.SaveChangesAsync();
+                logger.LogInformation("Feedback with ID {Id} successfully updated/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                return Results.NoContent(); // Updated
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to update feedback with ID {Id}/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                return Results.Problem("An error occurred while updating feedback.");
+            }
+        }).WithParameterValidation();
 
-            //     return Results.NoContent(); // updated
-            // });
+        // Delete feedback
+        feedback.MapDelete("/{id}", async (int id, HMS_Context db) => 
+        {
+            try
+            {
+                var rowsAffected = await db.Feedbacks.Where(f => f.Id == id).ExecuteDeleteAsync();
+                if (rowsAffected == 0)
+                {
+                    logger.LogWarning("Failed to delete. Feedback with ID {Id} not found/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                    return Results.NotFound("Feedback not found.");
+                }
 
-        // Delete users
-            feedback.MapDelete("/{id}", async (int id, HMS_Context db) => {
-
-                await db.Feedbacks.Where(feedback => feedback.Id == id)          // select user to remove
-                    .ExecuteDeleteAsync();                                   // execute
-
-                return Results.NoContent();                                 // deletes or not, does not matter
-            });
+                logger.LogInformation("Feedback with ID {Id} successfully deleted/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                return Results.NoContent();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred while deleting feedback with ID {Id}/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                return Results.Problem("An error occurred while deleting feedback.");
+            }
+        });
 
         return feedback;
     }
