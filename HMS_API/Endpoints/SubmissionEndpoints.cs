@@ -91,9 +91,37 @@ public class SubmissionEndpoints
 
             try
             {
+                // Retrieve the associated assignment to get its path
+                var assignment = await db.Assignments.FindAsync(newSubmission.AssignID);
+                        if (assignment == null)
+                {
+                    logger.LogWarning("Assignment with ID {AssignmentId} not found.", newSubmission.AssignID);
+                    return Results.NotFound($"Assignment with ID {newSubmission.AssignID} not found.");
+                }
+
+                // set base values for entity
                 Submission submission = newSubmission.ToEntity();
+                submission.FilePath = "Base";
+                DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+                submission.Created = currentDate;
+                submission.Modified = currentDate;
+
+
                 db.Submissions.Add(submission); // Add to db
                 await db.SaveChangesAsync();
+
+                // Build the full path for the submission (append submission ID to assignment's SubPath)
+                var submissionPath = Path.Combine(assignment.SubPath, submission.Id.ToString());
+
+                // Ensure the directory exists
+                if (!Directory.Exists(submissionPath))
+                {
+                    Directory.CreateDirectory(submissionPath);
+                }
+
+                 // update the submission entity to store the path 
+                submission.FilePath = submissionPath; 
+                await db.SaveChangesAsync(); // Save changes again to persist the path
 
                 logger.LogInformation("Submission successfully created/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.CreatedAtRoute(GetSubmissionEndpointName, new { id = submission.Id }, submission.ToSubmissionDetailsDto());
@@ -103,36 +131,62 @@ public class SubmissionEndpoints
                 logger.LogError(ex, "Failed to create submission.");
                 return Results.Problem("An error occurred while creating submission.");
             }
-        }).WithParameterValidation();
+        });
 
-        // Put = update submission
-        submission.MapPut("/{id}", async (int id, UpdateSubmissionDto updatedSubmission, HMS_Context db) => 
+// Put = update submission
+submission.MapPut("/{id}", async (int id, UpdateSubmissionDto updatedSubmission, HMS_Context db) =>
+{
+    var existingSubmission = await db.Submissions.FindAsync(id);
+
+    if (existingSubmission == null) // Submission must exist
+    {
+        logger.LogWarning("Submission with ID {id} not found for update.", id);
+        return Results.NotFound();
+    }
+
+    try
+    {
+        // Retrieve the associated assignment to get its path
+        var assignment = await db.Assignments.FindAsync(updatedSubmission.AssignID); 
+        if (assignment == null)
         {
-            var  existingSubmission = await db.Submissions.FindAsync(id);
+            logger.LogWarning("Assignment with ID {AssignmentId} not found.", updatedSubmission.AssignID);
+            return Results.NotFound($"Assignment with ID {updatedSubmission.AssignID} not found.");
+        }
 
-                if (existingSubmission == null) // Submisson must exist
-                {
-                    logger.LogWarning("Submission with ID {id} not found for update.", id);
-                    return Results.NotFound();
-                }
-            try
-            {
-                // change date on modified
-                var currentDate = DateOnly.FromDateTime(DateTime.Now);
-                existingSubmission.Modified = currentDate;
+        // Rebuild the submission path
+        var submissionPath = Path.Combine(assignment.SubPath, id.ToString());
 
-                db.Entry(existingSubmission).CurrentValues.SetValues(updatedSubmission.ToEntity(id)); // Set updated values in database
-                await db.SaveChangesAsync();
+        // Ensure the directory exists
+        if (!Directory.Exists(submissionPath))
+        {
+            Directory.CreateDirectory(submissionPath);
+        }  
 
-                logger.LogInformation("Submission with ID {Id} successfully updated/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-                return Results.NoContent(); // Updated successfully
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to update submission/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-                return Results.Problem("An error occurred while updating submission.");
-            }
-        }).WithParameterValidation();
+
+        // Set the modified values
+        DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        existingSubmission.StudID = updatedSubmission.StudID;
+        existingSubmission.AssignID = updatedSubmission.AssignID;
+        existingSubmission.SubDate = currentDate;
+        existingSubmission.FilePath = submissionPath;
+        existingSubmission.Marked = updatedSubmission.Marked;
+        existingSubmission.Modified = currentDate;
+        existingSubmission.Deleted = updatedSubmission.Deleted;
+
+        //db.Entry(existingSubmission).CurrentValues.SetValues(updatedSubmission.ToEntity(id)); // Set updated values in database
+        await db.SaveChangesAsync(); // Save changes to the database
+
+        logger.LogInformation("Submission with ID {Id} successfully updated. Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+        return Results.NoContent(); // Updated successfully
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to update submission with ID {Id}. Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+        return Results.Problem("An error occurred while updating submission.");
+    }
+});
+
 
         // Delete submission
         submission.MapDelete("/{id}", async (int id, HMS_Context db) => 
@@ -165,3 +219,4 @@ public class SubmissionEndpoints
         return submission;
     }
 }
+

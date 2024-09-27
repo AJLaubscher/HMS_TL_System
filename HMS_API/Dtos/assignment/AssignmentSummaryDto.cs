@@ -13,5 +13,5 @@ public record class AssignmentSummaryDto
 	string SubPath,
 	DateOnly Created, 
 	DateOnly Modified, 
-	int Deleted
+	bool Deleted
 );

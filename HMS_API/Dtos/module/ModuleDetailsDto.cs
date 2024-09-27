@@ -8,5 +8,5 @@ public record class ModuleDetailsDto
 	int LectID,
 	DateOnly Created,
 	DateOnly Modified,
-	int Deleted
+	bool Deleted
 );

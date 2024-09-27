@@ -11,7 +11,7 @@ public class Module
     public UserAccount? UserAccount {get; set;}                 // call user class
 	public DateOnly Created {get; set;}
 	public DateOnly Modified {get; set;}
-	public int Deleted {get; set;}
+	public bool Deleted {get; set;}
 
 	public ICollection<Enrolment>? Enrolments { get; set; } // = new List<Enrolment>();
 	public ICollection<Assignment>? Assignments { get; set; } // = new List<Assignment>();

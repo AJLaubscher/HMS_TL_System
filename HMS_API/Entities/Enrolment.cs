@@ -11,5 +11,5 @@ public class Enrolment
 	public DateOnly Enrol_year {get;set;}
 	public DateOnly Created {get;set;}
 	public DateOnly Modified {get;set;}
-	public int Deleted {get;set;}
+	public bool Deleted {get;set;}
 }

@@ -9,5 +9,5 @@ public record class EnrolmentSummaryDto
 	DateOnly Enrol_year,
 	DateOnly Created,
 	DateOnly Modified,
-	int Deleted
+	bool Deleted
 );

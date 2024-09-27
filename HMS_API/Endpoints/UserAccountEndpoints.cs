@@ -9,6 +9,7 @@ namespace HMS_API.Endpoints;
 
 public class UserAccountEndpoints
 {
+
     private readonly ILogger<UserAccountEndpoints> logger;
      
      // Constructor for Dependency Injection
@@ -25,6 +26,7 @@ public class UserAccountEndpoints
     public RouteGroupBuilder MapUserEndpoints(WebApplication app)
     {
         var user = app.MapGroup("users").WithParameterValidation();
+
 
         // Request all users
         user.MapGet("/", async (HMS_Context db) => {
@@ -83,6 +85,10 @@ public class UserAccountEndpoints
                     // Hash user password and store in DB
                     string passwordTohash = user.UserPassword;
                     user.UserPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(passwordTohash, 13);
+                    // force current dates to database
+                    DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+                    user.Created = currentDate;
+                    user.Modified = currentDate;
                     
                     // To verify password =  //user.UserPassword = BCrypt.Net.BCrypt.EnhancedVerify(passwordToVerify, passwordTohash);
 
@@ -106,43 +112,54 @@ public class UserAccountEndpoints
                 }
             }).WithParameterValidation();
 
-            // Put: update an existing user
-            user.MapPut("/{id}", async (int id, UpdateUserDto updatedUser, HMS_Context db) => 
-            {
-                var existingUser = await db.UserAccounts.FindAsync(id);
+// Put: update an existing user
+user.MapPut("/{id}", async (int id, UpdateUserDto updatedUser, HMS_Context db) => 
+{
+    var existingUser = await db.UserAccounts.FindAsync(id);
 
-                    if (existingUser == null)   // find user first
-                    {
-                        logger.LogWarning("User with ID {UserId} not found for update.", id);
-                        return Results.NotFound();
-                    }
-                try
-                {
-                    // hash new password
-                    string passwordTohash = existingUser.UserPassword;
-                    existingUser.UserPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(passwordTohash, 13);
+    if (existingUser == null) // Find user first
+    {
+        logger.LogWarning("User with ID {UserId} not found for update.", id);
+        return Results.NotFound();
+    }
 
-                    // modified date today
-                    var currentDate = DateOnly.FromDateTime(DateTime.Now);
-                    existingUser.Modified = currentDate;
+    try
+    {
+        // Check if a new password is provided and hash it
+        if (!string.IsNullOrEmpty(updatedUser.UserPassword))
+        {
+            existingUser.UserPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(updatedUser.UserPassword, 13);
+        }
 
-                    db.Entry(existingUser).CurrentValues.SetValues(updatedUser.ToEntity(id));
-                    await db.SaveChangesAsync();
+        // Map other properties from the DTO to the existing user
+        existingUser.Username = updatedUser.Username;
+        existingUser.FName = updatedUser.FName;
+        existingUser.LName = updatedUser.LName;
+        existingUser.UserRole = updatedUser.UserRole;
+        existingUser.Deleted = updatedUser.Deleted;
 
-                    // Log success
-                    logger.LogInformation("User with ID {UserId} successfully updated / Date/Time: {dateTime}.",id , DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+        // Update the modified date
+        DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        existingUser.Modified = currentDate;
 
-                    return Results.NoContent();
-                }
-                catch (Exception ex)
-                {
-                    // Log the exception and failure
-                    logger.LogError(ex, "An error occurred while updating user with ID {UserId}/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+        // Save changes
+        await db.SaveChangesAsync();
 
-                    // Return an error response
-                    return Results.Problem("An error occurred while updating the user.");
-                }
-            }).WithParameterValidation();
+        // Log success
+        logger.LogInformation("User with ID {UserId} successfully updated / Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+
+        return Results.NoContent();
+    }
+    catch (Exception ex)
+    {
+        // Log the exception and failure
+        logger.LogError(ex, "An error occurred while updating user with ID {UserId}/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+
+        // Return an error response
+        return Results.Problem("An error occurred while updating the user.");
+    }
+}).WithParameterValidation();
+
 
         // Delete: delete a user by ID
         user.MapDelete("/{id}", async (int id, HMS_Context db) => 

@@ -11,5 +11,5 @@ public record class UpdateFeedbackDto
 	[Required] int MarkAchieved,
 	// DateOnly Created,
 	[Required] DateOnly Modified,
-	int Deleted
+	bool Deleted
 );

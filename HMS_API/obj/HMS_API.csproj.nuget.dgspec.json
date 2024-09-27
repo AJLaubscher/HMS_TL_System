@@ -54,9 +54,15 @@
               "target": "Package",
               "version": "[4.0.3, )"
             },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.8, )"
+            },
             "Microsoft.EntityFrameworkCore.SqlServer": {
               "target": "Package",
-              "version": "[9.0.0-rc.1.24451.1, )"
+              "version": "[8.0.8, )"
             },
             "MinimalApis.Extensions": {
               "target": "Package",
