@@ -7,5 +7,5 @@ public record class EnrolmentDetailsDto
 	DateOnly Enrol_year,
 	DateOnly Created,
 	DateOnly Modified,
-	int Deleted
+	bool Deleted
 );

@@ -11,10 +11,10 @@ public class Submission
     public Assignment? Assignment {get; set;}                       // call on class
 	public DateOnly SubDate {get; set;}
 	public required string FilePath {get; set;}                     // construct filepath to exact submission
-	public int Marked {get; set;}
+	public bool Marked {get; set;}
 	public DateOnly Created {get; set;}
 	public DateOnly Modified {get; set;}
-	public int Deleted {get; set;}
+	public bool Deleted {get; set;}
 
 	public ICollection<Feedback>? Feedbacks { get; set; } // = new List<Assignment>();
 

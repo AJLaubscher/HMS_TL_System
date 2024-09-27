@@ -14,5 +14,5 @@ public class Feedback
 	public required int MarkAchieved {get; set;}
 	public DateOnly Created {get; set;}
 	public DateOnly Modified {get; set;}
-	public int Deleted {get; set;}
+	public bool Deleted {get; set;}
 }

@@ -15,7 +15,7 @@ public class Assignment
 	public required string SubPath {get; set;}
 	public DateOnly Created {get; set;}
 	public DateOnly Modified {get; set;}
-	public int Deleted {get; set;}
+	public bool Deleted {get; set;}
 
 	public ICollection<Submission>? Submissions { get; set; } // = new List<Submission>();
 }

@@ -12,5 +12,5 @@ public record class AssignmentDetailsDto
 	string SubPath,
 	DateOnly Created, 
 	DateOnly Modified, 
-	int Deleted
+	bool Deleted
 );

@@ -9,8 +9,8 @@ public record class SubmissionSummaryDto
     string Title,               // assignment title
 	DateOnly SubDate,
 	string FilePath,
-	int Marked,
+	bool Marked,
 	DateOnly Created,
 	DateOnly Modified,
-	int Deleted
+	bool Deleted
 );
