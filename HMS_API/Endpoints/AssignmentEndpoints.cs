@@ -83,46 +83,72 @@ public class AssignmentEndpoints
 
 
 
-        // Post, create assignment
-        assignment.MapPost("/", async (CreateAssignmentDto newAssignment, HMS_Context db) => { 
+// Post, create assignment
+assignment.MapPost("/", async (CreateAssignmentDto newAssignment, HMS_Context db) => { 
             
-            // data validation
-            if(newAssignment == null)
-            {
-                logger.LogWarning("new assignment has no values.");
-                return Results.BadRequest("Invalid assignment data.");
-            }
+    // Data validation
+    if (newAssignment == null)
+    {
+        logger.LogWarning("New assignment has no values.");
+        return Results.BadRequest("Invalid assignment data.");
+    }
 
-            var currentDate = DateOnly.FromDateTime(DateTime.Now); // current date
+    DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
 
-            if(newAssignment.OpenDate < currentDate)
-            {
-                logger.LogWarning("OpenDate is before the current system date.");
-                return Results.BadRequest("The open date must be today or later.");
-            }
-            if (newAssignment.DueDate <= newAssignment.OpenDate)
-            {
-                logger.LogWarning("DueDate is not after the OpenDate.");
-                return Results.BadRequest("The due date must be after the open date.");
-            } 
-            // continue to pass data to database
-            try{
-                    Assignment assignment = newAssignment.ToEntity();
-                    db.Assignments.Add(assignment);
-                    await db.SaveChangesAsync();
+    if (newAssignment.OpenDate < currentDate)
+    {
+        logger.LogWarning("OpenDate is before the current system date.");
+        return Results.BadRequest("The open date must be today or later.");
+    }
 
-                    logger.LogInformation("Assignment sucessfully created/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+    if (newAssignment.DueDate <= newAssignment.OpenDate)
+    {
+        logger.LogWarning("DueDate is not after the OpenDate.");
+        return Results.BadRequest("The due date must be after the open date.");
+    }
 
-                    return Results.CreatedAtRoute(GetAssignmentEndpointName, new { id = assignment.Id }, assignment.ToAssignmentDetailsDto());
-                   
-            }
-            catch(Exception ex)
-            {
-                logger.LogError(ex, "Failed to Create assignment/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-                return Results.Problem("An error occurred while Creating assignment.");
-            }
+    // Continue to pass data to database
+    try
+    {
+        Assignment assignment = newAssignment.ToEntity();
 
-        }).WithParameterValidation();
+        //force correct dates
+        assignment.Created = currentDate;
+        assignment.Modified = currentDate;
+        assignment.SubPath = "Wait for path";
+
+        // Save the assignment to generate the ID
+        db.Assignments.Add(assignment);
+        await db.SaveChangesAsync(); // This generates the Assignment ID
+
+        // Define the default base path (e.g., Documents\HMS_Assignments)
+        var baseDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HMS_Assignments");
+
+        // after ID is generated, append it to the subpath
+        var modId = newAssignment.ModID; 
+        var fullPath = Path.Combine(baseDirectory, modId.ToString(), assignment.Id.ToString());
+
+        // Ensure the directory exists
+        if (!Directory.Exists(fullPath))
+        {
+            Directory.CreateDirectory(fullPath);
+        }
+
+        // Update the assignment with the new subpath and save the changes
+        assignment.SubPath = fullPath; // Assign the updated subpath
+        db.Assignments.Update(assignment); // Update the assignment in the database
+        await db.SaveChangesAsync();
+
+        logger.LogInformation("Assignment successfully created/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+
+        return Results.CreatedAtRoute(GetAssignmentEndpointName, new { id = assignment.Id }, assignment.ToAssignmentDetailsDto());
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to create assignment/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+        return Results.Problem("An error occurred while creating the assignment.");
+    }
+});
 
         // Put = update assignment
         assignment.MapPut("/{id}", async (int id, UpdateAssignmentDto updatedAssignment, HMS_Context db) => {
@@ -134,7 +160,7 @@ public class AssignmentEndpoints
                 return Results.NotFound();
             }
 
-            var currentDate = DateOnly.FromDateTime(DateTime.Now); // current date
+            DateOnly currentDate = DateOnly.FromDateTime(DateTime.Now); // current date
 
             if(updatedAssignment.OpenDate < currentDate)
             {
@@ -149,10 +175,34 @@ public class AssignmentEndpoints
 
             try
             {
-                db.Entry(existingAssignment).CurrentValues.SetValues(updatedAssignment.ToEntity(id)); // Set updated values in database
+                //db.Entry(existingAssignment).CurrentValues.SetValues(updatedAssignment.ToEntity(id)); // Set updated values in database
 
                 // set modified to current date
                 existingAssignment.Modified = currentDate;
+
+                // Build the subpath using modId and assignmentId
+                var modId = updatedAssignment.ModID; 
+                // default base path (e.g., Documents\HMS_Assignments)
+                var baseDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HMS_Assignments");
+                // Build the full path using baseDirectory, modId, and assignmentId
+                var fullPath = Path.Combine(baseDirectory, modId.ToString(), id.ToString());
+
+                // Ensure the directory exists
+                if (!Directory.Exists(fullPath))
+                {
+                    Directory.CreateDirectory(fullPath);
+                }
+
+                // Update the assignment's values and save to db
+                existingAssignment.ModID = updatedAssignment.ModID;
+                existingAssignment.Title = updatedAssignment.Title;
+                existingAssignment.Instructions = updatedAssignment.Instructions;
+                existingAssignment.OpenDate = updatedAssignment.OpenDate;
+                existingAssignment.DueDate = updatedAssignment.DueDate;
+                existingAssignment.MaxMarks = updatedAssignment.MaxMarks;
+                existingAssignment.SubPath = fullPath;
+                existingAssignment.Modified = currentDate;
+                existingAssignment.Deleted = updatedAssignment.Deleted;
 
                 await db.SaveChangesAsync();
 
@@ -165,7 +215,7 @@ public class AssignmentEndpoints
                 logger.LogError(ex, "Failed to update assignment ID {id}/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Problem("An error occurred while updating assignment.");
             }
-        }).WithParameterValidation();
+        });
 
         // Delete assignment
         assignment.MapDelete("/{id}", async (int id, HMS_Context db) => {

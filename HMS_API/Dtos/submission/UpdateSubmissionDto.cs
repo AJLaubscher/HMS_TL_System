@@ -9,8 +9,8 @@ public record class UpdateSubmissionDto
 	[Required] int AssignID,
 	[Required] DateOnly SubDate,
 	string FilePath,
-	int Marked,
+	bool Marked,
 	//DateOnly Created,
 	[Required] DateOnly Modified,
-	int Deleted
+	bool Deleted
 );
