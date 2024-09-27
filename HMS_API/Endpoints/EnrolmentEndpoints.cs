@@ -73,26 +73,52 @@ public class EnrolmentEndpoints
 
             }).WithName(GetEnrolmentEndpointName);
 
-        // Post, create enrolment
-        enrolment.MapPost("/", async (CreateEnrolmentDto newEnrolment, HMS_Context db) => 
-        { 
-            try
+            // // Post: create enrolment
+            enrolment.MapPost("/", async (CreateEnrolmentDto newEnrolment, HMS_Context db) => 
             {
-                Enrolment enrolment = newEnrolment.ToEntity();
+                try
+                {
+                    // Ensure both ModID and StudID are present in the request
+                    if (newEnrolment.ModID == 0 || newEnrolment.StudID == 0)
+                    {
+                        logger.LogWarning("Module ID or Student ID is missing/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                        return Results.BadRequest("Module ID and Student ID must be provided.");
+                    }
 
-                db.Enrolments.Add(enrolment);
-                await db.SaveChangesAsync();
+                    // Check if the enrolment already exists
+                    var existingEnrolment = await db.Enrolments
+                                                    .FirstOrDefaultAsync(e => e.ModID == newEnrolment.ModID && e.StudID == newEnrolment.StudID);
+                    
+                    if (existingEnrolment != null)
+                    {
+                        logger.LogWarning("Enrolment with Module ID {ModId} and Student ID {StudId} already exists/ Date/Time: {dateTime}.", 
+                                        newEnrolment.ModID, newEnrolment.StudID, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                        return Results.Conflict("Enrolment already exists.");
+                    }
+                    
+                        // Create a new enrolment entity
+                        Enrolment enrolment = newEnrolment.ToEntity();
+                        DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow); // set enrol year
+                        enrolment.Enrol_year = currentDate;
+                        enrolment.Created = currentDate;  // set creation date
 
-                logger.LogInformation("Enrolment with Module ID {ModId} and Student ID {StudId} successfully created/ Date/Time: {dateTime}.", enrolment.ModID, enrolment.StudID, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
 
-                return Results.CreatedAtRoute(GetEnrolmentEndpointName, new { modId = enrolment.ModID, studId = enrolment.StudID }, enrolment.ToEnrolmentDetailsDto());
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to create enrolment/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-                return Results.Problem("An error occurred while creating the enrolment.");
-            }
-        }).WithParameterValidation();
+                    // Add the enrolment to the database
+                    db.Enrolments.Add(enrolment);
+                    await db.SaveChangesAsync();
+
+                    logger.LogInformation("Enrolment with Module ID {ModId} and Student ID {StudId} successfully created/ Date/Time: {dateTime}.", 
+                                        enrolment.ModID, enrolment.StudID, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                    // Return the newly created enrolment details
+                    return Results.CreatedAtRoute("GetEnrolment", new { modId = enrolment.ModID, studId = enrolment.StudID }, enrolment);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to create enrolment/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                    return Results.Problem("An error occurred while creating the enrolment.");
+                }
+            });
 
         // Put = update enrolment
         enrolment.MapPut("/{modId}/{studId}", async (int modId, int studId, UpdateEnrolmentDto updatedEnrolment, HMS_Context db) => 
@@ -107,10 +133,12 @@ public class EnrolmentEndpoints
             try
             {
                 // set modified date
-                var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                existingEnrolment.Enrol_year = updatedEnrolment.Enrol_year;
+                DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
                 existingEnrolment.Modified = currentDate;
+                existingEnrolment.Deleted = updatedEnrolment.Deleted;
 
-                db.Entry(existingEnrolment).CurrentValues.SetValues(updatedEnrolment.ToEntity(modId, studId)); // Set updated values in database
+                //db.Entry(existingEnrolment).CurrentValues.SetValues(updatedEnrolment.ToEntity(modId, studId)); // Set updated values in database
                 await db.SaveChangesAsync();
 
                 logger.LogInformation("Enrolment with Module ID {ModId} and Student ID {StudId} successfully updated/ Date/Time: {dateTime}.", modId, studId, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -121,7 +149,7 @@ public class EnrolmentEndpoints
                 logger.LogError(ex, "Failed to update enrolment with Module ID {ModId} and Student ID {StudId}/ Date/Time: {dateTime}.", modId, studId, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Problem("An error occurred while updating the enrolment.");
             }
-        }).WithParameterValidation();
+        });
 
         // Delete enrolment
         enrolment.MapDelete("/{modId}/{studId}", async (int modId, int studId, HMS_Context db) => 

@@ -10,5 +10,5 @@ public record class UserSummaryDto // return list of all users
 	int UserRole,
 	DateOnly Created,
 	DateOnly Modified,
-	int Deleted
+	bool Deleted
 );

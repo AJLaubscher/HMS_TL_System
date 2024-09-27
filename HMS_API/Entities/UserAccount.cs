@@ -12,7 +12,7 @@ public class UserAccount
 	public required int UserRole {get; set;}
 	public DateOnly Created {get; set;}
 	public DateOnly Modified {get; set;}
-	public int Deleted {get; set;}
+	public bool Deleted {get; set;}
 
 	public ICollection<Enrolment>? Enrolments { get; set; } // = new List<Enrolment>();
 	public ICollection<Module>? Modules { get; set; } // = new List<Module>();

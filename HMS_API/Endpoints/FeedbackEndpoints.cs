@@ -71,6 +71,12 @@ public class FeedbackEndpoints
             try
             {
                 Feedback feedback = newFeedback.ToEntity();
+                // force date creation
+                DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+                feedback.Created = currentDate;
+                feedback.ReturnDate = currentDate;
+                feedback.Modified = currentDate;
+
                 db.Feedbacks.Add(feedback);
                 await db.SaveChangesAsync();
 
@@ -96,11 +102,15 @@ public class FeedbackEndpoints
                 }
             try
             {
-                // change date on modified
-                var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                // inject updated information
+                DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+                existingFeedback.Comment = updateFeedback.Comment;
+                existingFeedback.ReturnDate = currentDate;
+                existingFeedback.MarkAchieved = updateFeedback.MarkAchieved;
                 existingFeedback.Modified = currentDate;
+                existingFeedback.Deleted = updateFeedback.Deleted;
 
-                db.Entry(existingFeedback).CurrentValues.SetValues(updateFeedback.ToEntity(id)); // Set updated values in database
+                //db.Entry(existingFeedback).CurrentValues.SetValues(updateFeedback.ToEntity(id)); // Set updated values in database
                 await db.SaveChangesAsync();
 
                 logger.LogInformation("Feedback with ID {Id} successfully updated/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -111,7 +121,7 @@ public class FeedbackEndpoints
                 logger.LogError(ex, "Failed to update feedback with ID {Id}/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Problem("An error occurred while updating feedback.");
             }
-        }).WithParameterValidation();
+        });
 
         // Delete feedback
         feedback.MapDelete("/{id}", async (int id, HMS_Context db) => 

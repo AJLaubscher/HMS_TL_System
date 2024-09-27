@@ -7,8 +7,8 @@ public record class SubmissionDetailsDto
 	int AssignID,
 	DateOnly SubDate,
 	string FilePath,
-	int Marked,
+	bool Marked,
 	DateOnly Created,
 	DateOnly Modified,
-	int Deleted
+	bool Deleted
 );

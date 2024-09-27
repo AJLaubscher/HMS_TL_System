@@ -82,6 +82,12 @@ public class ModuleEndpoints
             try
             {
                 Module module = newModule.ToEntity();
+
+                //force correct dates
+                DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+                module.Created = currentDate;
+                module.Modified = currentDate;
+
                 db.Modules.Add(module);
                 await db.SaveChangesAsync();
 
@@ -94,7 +100,7 @@ public class ModuleEndpoints
                 logger.LogError(ex, "Failed to create module.");
                 return Results.Problem("An error occurred while creating the module.");
             }
-        }).WithParameterValidation();
+        });
 
         // Put = update module
         module.MapPut("/{id}", async (int id, UpdateModuleDto updatedModule, HMS_Context db) => 
@@ -108,11 +114,16 @@ public class ModuleEndpoints
                 }
             try
             {
+                //map properties
+                existingModule.Code = updatedModule.Code;
+                existingModule.ModName = updatedModule.ModName;
+                existingModule.LectID = updatedModule.LectID;
+                existingModule.Deleted = updatedModule.Deleted;
+
                 // set modified date
-                var currentDate = DateOnly.FromDateTime(DateTime.Now);
+                DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
                 existingModule.Modified = currentDate;
 
-                db.Entry(existingModule).CurrentValues.SetValues(updatedModule.ToEntity(id)); // Set updated values in database
                 await db.SaveChangesAsync();
 
                 logger.LogInformation("Module with ID {ModuleId} successfully updated/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -123,7 +134,7 @@ public class ModuleEndpoints
                 logger.LogError(ex, "Failed to update module with ID {ModuleId}/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Problem("An error occurred while updating the module.");
             }
-        }).WithParameterValidation();
+        });
 
         // Delete module
         module.MapDelete("/{id}", async (int id, HMS_Context db) => 
