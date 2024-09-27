@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "PAGnRe2M7Yc=",
+  "dgSpecHash": "XHjufmJBmFI=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Andre\\Documents\\BSc IT\\01_Third year\\01_Second Semester\\CMPG_323\\Projects\\GitHubRepositories\\HMS_TL_System\\HMS_API\\HMS_API.csproj",
+  "projectFilePath": "c:\\Users\\Andre\\Documents\\BSc IT\\01_Third year\\01_Second Semester\\CMPG_323\\Projects\\GitHubRepositories\\HMS_TL_System\\HMS_API\\HMS_API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Andre\\.nuget\\packages\\azure.core\\1.35.0\\azure.core.1.35.0.nupkg.sha512",
     "C:\\Users\\Andre\\.nuget\\packages\\azure.identity\\1.10.3\\azure.identity.1.10.3.nupkg.sha512",

@@ -1,12 +1,12 @@
-GET http://localhost:5099/modules
+GET http://localhost:5157/modules
 
 
 
 ###
-GET http://localhost:5099/modules/1
+GET http://localhost:5157/modules/1
 
 ###
-POST  http://localhost:5099/modules
+POST http://localhost:5157/modules
 Content-Type: application/json
 
 {
@@ -16,7 +16,7 @@ Content-Type: application/json
 }
 
 ###
-PUT  http://localhost:5099/modules/1
+PUT http://localhost:5157/modules/1
 Content-Type: application/json
 
 {
@@ -27,4 +27,4 @@ Content-Type: application/json
 }
 
 ###
-DELETE  http://localhost:5099/modules/1
+DELETE http://localhost:5157/modules/1
