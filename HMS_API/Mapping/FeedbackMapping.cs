@@ -9,8 +9,8 @@ public static class FeedbackMapping
     {
         return new ()
         {
-            SubID = feedback.SubID,              //get from submission chosen
-            LectID = feedback.LectID,             // get form user/login
+            SubID = feedback.SubID,              
+            LectID = feedback.LectID,             
             Comment = feedback.Comment,
             MarkAchieved = feedback.MarkAchieved
         };
@@ -38,9 +38,9 @@ public static class FeedbackMapping
         return new
         (
             feedback.Id,
-            feedback.SubID,              //get from submission chosen
-            feedback.LectID,             // get form user/login
-            feedback.UserAccount!.FName,        // get lecturer name from user table
+            feedback.SubID,              
+            feedback.LectID,            
+            feedback.UserAccount!.FName,       
             feedback.Comment,
             feedback.ReturnDate,
             feedback.MarkAchieved,
@@ -55,8 +55,8 @@ public static class FeedbackMapping
         return new
         (
             feedback.Id,
-            feedback.SubID,              //get from submission chosen
-            feedback.LectID,             // get form user/login
+            feedback.SubID,              
+            feedback.LectID,             
             feedback.Comment,
             feedback.ReturnDate,
             feedback.MarkAchieved,
