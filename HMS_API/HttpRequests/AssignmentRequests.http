@@ -1,11 +1,11 @@
-GET http://localhost:5099/assignments
+GET http://localhost:5157/assignments
 
 ###
-GET http://localhost:5099/assignments/4
+GET http://localhost:5157/assignments/4
 
 
 ###
-POST http://localhost:5099/assignments
+POST http://localhost:5157/assignments
 Content-Type: application/json
 
 {
@@ -19,7 +19,7 @@ Content-Type: application/json
 
 
 ###
-PUT  http://localhost:5099/assignments/4
+PUT http://localhost:5157/assignments/4
 Content-Type: application/json
 
 {
@@ -37,4 +37,4 @@ Content-Type: application/json
 
 
 ###
-DELETE  http://localhost:5099/assignments/1
+DELETE http://localhost:5157/assignments/1
