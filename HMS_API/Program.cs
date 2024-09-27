@@ -19,6 +19,10 @@ builder.Logging.AddJsonConsole(options =>   // JSon format logs
     };
 });
 
+// Add Swagger services
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 app.UseStatusCodePages();   // default response handler checking responses with status codes between 400 and 599 that do not have a body.
@@ -43,5 +47,17 @@ enrollmentEndpoints.MapEnrolmentEndpoints(app);
 assignmentEndpoints.MapAssignmentEndpoints(app);
 submissionEndpoints.MapSubmissionEndpoints(app);
 feedbackEndpoints.MapFeedbackEndpoints(app);
+
+// Enable Swagger middleware
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "HMS API V1");
+        c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
+    });
+}
+
 
 app.Run();
