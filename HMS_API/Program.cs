@@ -26,7 +26,7 @@ app.UseExceptionHandler();  // catch exceptions, log them, and re-execute the re
 
 //app.MapGet("/", () => "Hello World!");
 
-app.UseHttpLogging();           // log http requests & responses
+//app.UseHttpLogging();           // log http requests & responses
 
 // Create an instance of user, module, enrolment, assignment, submisson and feedback endpoints
 var userEndpoints = new UserAccountEndpoints();
