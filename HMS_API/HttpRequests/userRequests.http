@@ -1,12 +1,12 @@
-GET http://localhost:5099/users 
+GET http://localhost:5157/users 
 
 
 ###
-GET http://localhost:5099/users/1
+GET http://localhost:5157/users/1
 
 
 ### 
-POST  http://localhost:5099/users
+POST  http://localhost:5157/users
 Content-Type: application/json
 
 {
@@ -18,7 +18,7 @@ Content-Type: application/json
 }
 
 ###
-PUT http://localhost:5099/users/2
+PUT http://localhost:5157/users/2
 Content-Type: application/json
 
 {
@@ -31,4 +31,4 @@ Content-Type: application/json
 }
 
 ###
-DELETE  http://localhost:5099/users/3
+DELETE http://localhost:5157/users/3
