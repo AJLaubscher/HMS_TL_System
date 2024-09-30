@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-run id="0" runstate="Runnable" testcasecount="1" result="Passed" total="1" passed="1" failed="0" warnings="0" inconclusive="0" skipped="0" asserts="1" engine-version="3.18.2.0" clr-version="4.0.30319.42000" start-time="2024-09-24 20:39:08Z" end-time="2024-09-24 20:39:08Z" duration="0.619897">
+  <command-line><![CDATA[nunit3-console.exe  bin\debug\net8.0\HMS_TL_System_UnitTests.dll]]></command-line>
+  <test-suite type="Assembly" id="1-1002" name="HMS_TL_System_UnitTests.dll" fullname="C:\Users\Chris\HMS_TL_System\HMS_TL_System_UnitTests\bin\debug\net8.0\HMS_TL_System_UnitTests.dll" runstate="Runnable" testcasecount="1" result="Passed" start-time="2024-09-24T20:39:08.7087224Z" end-time="2024-09-24T20:39:08.8280803Z" duration="0.119334" total="1" passed="1" failed="0" warnings="0" inconclusive="0" skipped="0" asserts="1">
+    <environment framework-version="4.2.2.0" clr-version="8.0.8" os-version="Microsoft Windows 10.0.19045" platform="Win32NT" cwd="C:\Users\Chris\HMS_TL_System\HMS_TL_System_UnitTests" machine-name="DESKTOP-2999I1K" user="Chris" user-domain="DESKTOP-2999I1K" culture="en-ZA" uiculture="en-US" os-architecture="x64" />
+    <settings>
+      <setting name="DisposeRunners" value="True" />
+      <setting name="WorkDirectory" value="C:\Users\Chris\HMS_TL_System\HMS_TL_System_UnitTests" />
+      <setting name="ImageRuntimeVersion" value="4.0.30319" />
+      <setting name="ImageTargetFrameworkName" value=".NETCoreApp,Version=v8.0" />
+      <setting name="ImageRequiresX86" value="False" />
+      <setting name="ImageRequiresDefaultAppDomainAssemblyResolver" value="False" />
+      <setting name="TargetRuntimeFramework" value="netcore-8.0" />
+      <setting name="NumberOfTestWorkers" value="8" />
+    </settings>
+    <properties>
+      <property name="_PID" value="23392" />
+      <property name="_APPDOMAIN" value="nunit-agent" />
+    </properties>
+    <test-suite type="TestSuite" id="1-1003" name="HMS_TL_System_UnitTests" fullname="HMS_TL_System_UnitTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2024-09-24T20:39:08.7118647Z" end-time="2024-09-24T20:39:08.8280628Z" duration="0.116198" total="1" passed="1" failed="0" warnings="0" inconclusive="0" skipped="0" asserts="1">
+      <test-suite type="TestFixture" id="1-1000" name="InfrastructureTests" fullname="HMS_TL_System_UnitTests.InfrastructureTests" classname="HMS_TL_System_UnitTests.InfrastructureTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2024-09-24T20:39:08.7127880Z" end-time="2024-09-24T20:39:08.8277548Z" duration="0.114967" total="1" passed="1" failed="0" warnings="0" inconclusive="0" skipped="0" asserts="1">
+        <test-case id="1-1001" name="IsWebRespondingAsync" fullname="HMS_TL_System_UnitTests.InfrastructureTests.IsWebRespondingAsync" methodname="IsWebRespondingAsync" classname="HMS_TL_System_UnitTests.InfrastructureTests" runstate="Runnable" seed="1309296415" result="Passed" start-time="2024-09-24T20:39:08.7149281Z" end-time="2024-09-24T20:39:08.8259384Z" duration="0.111058" asserts="1">
+          <output><![CDATA[Hello World!
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
