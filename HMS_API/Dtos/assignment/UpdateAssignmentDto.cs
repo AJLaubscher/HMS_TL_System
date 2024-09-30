@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace HMS_API.Dtos.assignment;
 
 public record class UpdateAssignmentDto
@@ -12,5 +14,5 @@ public record class UpdateAssignmentDto
 	string SubPath,
 	// DateOnly Created, 
 	DateOnly Modified, 
-	int Deleted
+	bool Deleted
 );

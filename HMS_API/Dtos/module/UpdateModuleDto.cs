@@ -1,12 +1,14 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace HMS_API.Dtos.module;
 
 public record class UpdateModuleDto
 (
 	//Id
-	string Code,
-	string ModName,
+	[StringLength(7)] string Code,
+	[StringLength(20)] string ModName,
 	int LectID,
 	//DateOnly Created,         non changing value
-	DateOnly Modified,
-	int Deleted
+	 DateOnly Modified,
+	bool Deleted
 );

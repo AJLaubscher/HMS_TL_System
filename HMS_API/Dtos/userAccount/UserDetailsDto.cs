@@ -10,5 +10,5 @@ public record class UserDetailsDto // passed when posting and updating
 	int UserRole,
 	DateOnly Created,
 	DateOnly Modified,
-	int Deleted
+	bool Deleted
 );

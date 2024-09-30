@@ -1,0 +1,34 @@
+GET http://localhost:5157/users 
+
+
+###
+GET http://localhost:5157/users/1
+
+
+### 
+POST  http://localhost:5157/users
+Content-Type: application/json
+
+{
+    "Username": "Andre@123",
+    "UserPassword": "Admin@123",
+    "FName": "Andre",
+    "LName": "Laubscher",
+    "UserRole": 1
+}
+
+###
+PUT http://localhost:5157/users/2
+Content-Type: application/json
+
+{
+    "Username": "42048303",
+    "UserPassword": "Admin@123",
+    "FName": "Chris",
+    "LName": "K",
+    "UserRole": 1,
+    "Deleted" : false
+}
+
+###
+DELETE http://localhost:5157/users/3

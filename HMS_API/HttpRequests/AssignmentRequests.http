@@ -1,0 +1,40 @@
+GET http://localhost:5157/assignments
+
+###
+GET http://localhost:5157/assignments/4
+
+
+###
+POST http://localhost:5157/assignments
+Content-Type: application/json
+
+{
+	"ModID": 1, 
+	"Title": "web API",
+	"Instructions": "Create a web API with Authorization", 
+	"OpenDate": "2024-09-27", 
+	"DueDate": "2024-09-29", 
+	"MaxMarks": 100
+}
+
+
+###
+PUT http://localhost:5157/assignments/4
+Content-Type: application/json
+
+{
+	"ModID": 1, 
+	"Title": "ASP. NET: web API",
+	"Instructions": "Create a web API with Authorization", 
+	"OpenDate": "2024-09-27", 
+	"DueDate": "2024-09-28", 
+	"MaxMarks": 100,
+	"Deleted": false
+}
+
+
+
+
+
+###
+DELETE http://localhost:5157/assignments/1

@@ -9,5 +9,5 @@ public record class ModuleSummaryDto
     string LectName,         // pass lecturer name as well
 	DateOnly Created,
 	DateOnly Modified,
-	int Deleted
+	bool Deleted
 );

@@ -1,13 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace HMS_API.Dtos.feedback;
 
 public record class UpdateFeedbackDto
 (
-    int SubID,             
-	int LectID,             
-	string Comment,
-	DateOnly ReturnDate,
-	int MarkAchieved,
+    [Required] int SubID,             
+	[Required] int LectID,             
+	[Required] [StringLength(100)] string Comment,
+	[Required] DateOnly ReturnDate,
+	[Required] int MarkAchieved,
 	// DateOnly Created,
-	DateOnly Modified,
-	int Deleted
+	[Required] DateOnly Modified,
+	bool Deleted
 );

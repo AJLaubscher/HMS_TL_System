@@ -11,5 +11,5 @@ public record class FeedbackSummaryDto
 	int MarkAchieved,
 	DateOnly Created,
 	DateOnly Modified,
-	int Deleted
+	bool Deleted
 );
