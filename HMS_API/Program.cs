@@ -1,4 +1,5 @@
 using HMS_API;
+using HMS_API.Configurations;
 using HMS_API.Data;
 using HMS_API.Endpoints;
 
@@ -9,6 +10,9 @@ var conn = builder.Configuration.GetConnectionString("HMS");
 builder.Services.AddSqlServer<HMS_Context>(conn)
                 .AddProblemDetails()                            //services for failed requests.
                 .AddExceptionHandler<GlobalExceptionHandler>(); //handle unexpected request exceptions
+
+// Configure Kestrel server limits for large uploads
+KestrelConfiguration.ConfigureKestrelLimits(builder.WebHost);
 
 
 builder.Logging.AddJsonConsole(options =>   // JSon format logs
@@ -22,6 +26,9 @@ builder.Logging.AddJsonConsole(options =>   // JSon format logs
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// setting the name of XSRF token
+builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
 var app = builder.Build();
 
@@ -37,6 +44,7 @@ var userEndpoints = new UserAccountEndpoints();
 var moduleEndpoints = new ModuleEndpoints();
 var enrollmentEndpoints = new EnrolmentEndpoints();
 var assignmentEndpoints = new AssignmentEndpoints();
+var uploadToken = new PostTokenEndpoint();
 var submissionEndpoints = new SubmissionEndpoints();
 var feedbackEndpoints = new FeedbackEndpoints();
 
@@ -45,6 +53,7 @@ userEndpoints.MapUserEndpoints(app);
 moduleEndpoints.MapModuleEndpoints(app);
 enrollmentEndpoints.MapEnrolmentEndpoints(app);
 assignmentEndpoints.MapAssignmentEndpoints(app);
+uploadToken.MapPostTokenEndpoint(app);
 submissionEndpoints.MapSubmissionEndpoints(app);
 feedbackEndpoints.MapFeedbackEndpoints(app);
 
