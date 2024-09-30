@@ -43,3 +43,6 @@ msbuild.err
 msbuild.wrn
 
 Scripts/TestResult.xml
+
+# do not track this file(too large for github)
+HMS_API/ffmpeg/
