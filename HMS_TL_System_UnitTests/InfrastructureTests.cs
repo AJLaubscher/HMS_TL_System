@@ -14,7 +14,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using HMS_API.Dtos.assignment;
 
-[TestFixture]
 public class InfrastructureTests
 {
 
@@ -70,12 +69,12 @@ public class InfrastructureTests
     }
     
     // [Test]
-    public async Task getAssignmentEdpt_ReturnsCorrectData()
-    {
-        // HttpResponseMessage response = await GetHttpClient().GetAsync("http://localhost:5157/assignments/1");
-        // response.EnsureSuccessStatusCode();
-        // var content = await response.Content.ReadAsStringAsync();
-    }
+    // public async Task getAssignmentEdpt_ReturnsCorrectData()
+    // {
+    //     // HttpResponseMessage response = await GetHttpClient().GetAsync("http://localhost:5157/assignments/1");
+    //     // response.EnsureSuccessStatusCode();
+    //     // var content = await response.Content.ReadAsStringAsync();
+    // }
 
 
     [Test]
@@ -87,7 +86,8 @@ public class InfrastructureTests
             requestDto
         );
 
-        switch (response.StatusCode) {
+        switch (response.StatusCode) 
+        {
             case HttpStatusCode.InternalServerError: 
                 var json = response.Content.ReadAsStream();
                 Console.WriteLine(json);
@@ -99,6 +99,9 @@ public class InfrastructureTests
                 Console.WriteLine(serialized);
                 break;
 
+            case HttpStatusCode.OK:
+                Console.WriteLine("It is now working - I think");
+                break;
             default:
                 break;
         }
