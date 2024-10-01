@@ -39,6 +39,9 @@ app.UseExceptionHandler();  // catch exceptions, log them, and re-execute the re
 
 //app.UseHttpLogging();           // log http requests & responses
 
+// Add the Antiforgery middleware
+app.UseAntiforgery();  // Add this line to include the middleware
+
 // Create an instance of user, module, enrolment, assignment, submisson and feedback endpoints
 var userEndpoints = new UserAccountEndpoints();
 var moduleEndpoints = new ModuleEndpoints();

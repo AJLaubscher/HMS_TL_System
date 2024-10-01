@@ -106,6 +106,7 @@ public class SubmissionEndpoints
                     Submission submission = newSubmission.ToEntity();
                     submission.FilePath = "Base";
                     DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+                    submission.SubDate = currentDate;
                     submission.Created = currentDate;
                     submission.Modified = currentDate;
 
