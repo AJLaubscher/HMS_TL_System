@@ -1,7 +1,10 @@
+using System.Text;
 using HMS_API;
 using HMS_API.Configurations;
 using HMS_API.Data;
 using HMS_API.Endpoints;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +25,26 @@ builder.Logging.AddJsonConsole(options =>   // JSon format logs
         Indented = true
     };
 });
+
+//configure jwt token services
+var configuration = builder.Configuration;
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options => 
+    {  
+        var tokenKey = configuration.GetSection("AppSettings:Token").Value;
+
+        if(string.IsNullOrEmpty(tokenKey))
+        {
+            throw new ArgumentNullException(nameof(tokenKey), "Token key is not provided in the configuration.");
+        }
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey)),
+            ValidateIssuer = false,
+            ValidateAudience = false
+        };
+    });
 
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
