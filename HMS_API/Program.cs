@@ -66,7 +66,7 @@ app.UseExceptionHandler();  // catch exceptions, log them, and re-execute the re
 app.UseAntiforgery();  // Add this line to include the middleware
 
 // Create an instance of user, module, enrolment, assignment, submisson and feedback endpoints
-var userEndpoints = new UserAccountEndpoints();
+var userEndpoints = new UserAccountEndpoints(configuration);
 var moduleEndpoints = new ModuleEndpoints();
 var enrollmentEndpoints = new EnrolmentEndpoints();
 var assignmentEndpoints = new AssignmentEndpoints();
