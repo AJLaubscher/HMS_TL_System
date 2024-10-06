@@ -191,6 +191,45 @@ user.MapPut("/{id}", async (int id, UpdateUserDto updatedUser, HMS_Context db) =
             }
         });
 
+        // register a user
+        user.MapPost("/register", async (CreateUserDto newUser, HMS_Context db) => 
+        {
+                
+            try
+            {
+                // Create a new user entity from the DTO
+                UserAccount user = newUser.ToEntity();
+
+                // Hash user password and store in DB
+                string passwordTohash = user.UserPassword;
+                user.UserPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(passwordTohash, 13);
+
+                // force current dates to database
+                DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+                user.Created = currentDate;
+                user.Modified = currentDate;
+                    
+                // Add user to the database
+                db.UserAccounts.Add(user);
+                await db.SaveChangesAsync();
+
+                // Log success
+                logger.LogInformation("User with ID {UserId} successfully created/ Date/Time: {dateTime}.",user.Id , DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                // Return the created user details
+                return Results.CreatedAtRoute(GetUserEndpointName, new { id = user.Id }, user.ToUserDetailsDto());
+                }
+                catch (Exception ex)
+                {
+                    // Log the exception and failure
+                    logger.LogError(ex, "An error occurred while creating a new user/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                    // Return an error response
+                    return Results.Problem("An error occurred while creating the user");
+                }
+
+        }).WithParameterValidation();
+
         return user;
     }
 }
