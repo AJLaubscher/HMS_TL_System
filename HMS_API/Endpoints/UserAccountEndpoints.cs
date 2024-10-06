@@ -1,9 +1,12 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using HMS_API.Data;
 using HMS_API.Dtos.userAccount;
 using HMS_API.Entities;
 using HMS_API.Mapping;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace HMS_API.Endpoints;
 
@@ -11,14 +14,17 @@ public class UserAccountEndpoints
 {
 
     private readonly ILogger<UserAccountEndpoints> logger;
+    private readonly IConfiguration _configuration;
      
      // Constructor for Dependency Injection
-    public UserAccountEndpoints()
+    public UserAccountEndpoints(IConfiguration configuration)
     {
-            logger = LoggerFactory.Create(builder =>
-            {
-                builder.AddConsole();
-            }).CreateLogger<UserAccountEndpoints>();
+        _configuration = configuration;
+        
+        logger = LoggerFactory.Create(builder =>
+        {
+            builder.AddConsole();
+        }).CreateLogger<UserAccountEndpoints>();
     }
 
     const string GetUserEndpointName = "GetUser";
@@ -230,7 +236,78 @@ user.MapPut("/{id}", async (int id, UpdateUserDto updatedUser, HMS_Context db) =
 
         }).WithParameterValidation();
 
+        // user log in
+        user.MapPost("/login", (LoginDto login, HMS_Context db) => 
+        {
+
+            // Bcrypt method, if works, no use to change db
+            var user = db.UserAccounts.FirstOrDefault(x => x.Username == login.Username);
+
+            // not found    
+            if(user == null)
+                return Results.Unauthorized();
+
+            if(!VerifyPassword(login.UserPassword, user.UserPassword))
+            {
+                logger.LogWarning("Password verification failed for user {Username}", login.Username);
+                return Results.BadRequest("Incorrect credentials");
+            }
+
+            // Generate JWT token and return on success
+            string token = CreateToken(user);
+            return Results.Ok(new{Token = token});
+                
+        });//.WithTags("UserAccountEndpoints");
+
         return user;
+    }
+
+    private bool VerifyPassword(string password, string storedPassword)
+    {
+        // return true/false
+        bool verify = BCrypt.Net.BCrypt.EnhancedVerify(password, storedPassword);
+        return verify;
+    }
+
+    private string CreateToken(UserAccount user)
+    {
+        List<Claim> claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, user.Username),
+            //new Claim(ClaimTypes.Role, user.UserRole)
+        };
+
+        var tokenKey = _configuration.GetValue<string>("AppSettings:Token");
+       // var tokenKey = _configuration.GetSection("AppSettings:Token").Value;
+
+        if(string.IsNullOrEmpty(tokenKey))
+        {
+            throw new ArgumentException("AppSettings:Token", "JWT token secret not found in configuration.");
+        }
+
+        // Log the key length (this is for debugging purposes only, don't log keys in production!)
+        logger.LogInformation("JWT Token Key Length: {KeyLength}", tokenKey.Length);
+
+        var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(tokenKey));
+
+        // Check if the key is of sufficient length
+        if (key.KeySize < 512) // Key size is in bits
+        {
+            throw new ArgumentOutOfRangeException(nameof(tokenKey), "JWT token key size must be at least 512 bits.");
+        }
+
+        var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.Now.AddDays(1),
+            signingCredentials: cred
+        ); 
+
+        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+        return jwt;
     }
 }
 
