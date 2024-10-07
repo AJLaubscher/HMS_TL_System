@@ -82,26 +82,30 @@ app.UseExceptionHandler();  // catch exceptions, log them, and re-execute the re
 
 //app.UseHttpLogging();           // log http requests & responses
 
-app.UseAuthentication(); // add authentication & authorization middleware to app
+// Add authentication & authorization middleware to app
+app.UseAuthentication(); 
 app.UseAuthorization();
 
-
-// Create an instance of user, module, enrolment, assignment, submisson and feedback endpoints
-var userEndpoints = new UserAccountEndpoints(configuration);
-var moduleEndpoints = new ModuleEndpoints();
-var enrollmentEndpoints = new EnrolmentEndpoints();
-var assignmentEndpoints = new AssignmentEndpoints();
-var uploadToken = new PostTokenEndpoint();
-var submissionEndpoints = new SubmissionEndpoints();
-var feedbackEndpoints = new FeedbackEndpoints();
-
-// Call the method to map user, module, enrolment, assignment, submisson and feedback endpoints
+// Create an instances and map endpoints
+var userEndpoints = new UserAccountEndpoints(configuration); 
 userEndpoints.MapUserEndpoints(app);
+
+var moduleEndpoints = new ModuleEndpoints();
 moduleEndpoints.MapModuleEndpoints(app);
+
+var enrollmentEndpoints = new EnrolmentEndpoints();
 enrollmentEndpoints.MapEnrolmentEndpoints(app);
+
+var assignmentEndpoints = new AssignmentEndpoints();
 assignmentEndpoints.MapAssignmentEndpoints(app);
+
+var uploadToken = new PostTokenEndpoint();
 uploadToken.MapPostTokenEndpoint(app);
+
+var submissionEndpoints = new SubmissionEndpoints();
 submissionEndpoints.MapSubmissionEndpoints(app);
+
+var feedbackEndpoints = new FeedbackEndpoints();
 feedbackEndpoints.MapFeedbackEndpoints(app);
 
 // Enable Swagger middleware
