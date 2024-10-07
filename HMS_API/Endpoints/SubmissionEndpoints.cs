@@ -1,4 +1,5 @@
 using System;
+using System.Security.Claims;
 using HMS_API.Data;
 using HMS_API.Dtos.submission;
 using HMS_API.Entities;
@@ -28,13 +29,16 @@ public class SubmissionEndpoints
     public RouteGroupBuilder MapSubmissionEndpoints(WebApplication app)
     {
         var submission = app.MapGroup("submissions")
-                            .WithParameterValidation();
+                            .WithParameterValidation()
+                            .RequireAuthorization();
 
             // Requests for all submissions
-            submission.MapGet("/", async (HMS_Context db) => 
+            submission.MapGet("/", async (HMS_Context db, ClaimsPrincipal account) => 
             {
                 try
                 {
+                    if(VerifyAdminLecturerClaim(account)== false) // Check if the user has the Admin or Lecturer role using HasClaim
+                        return Results.Forbid(); // Return 403 Forbidden if neither role
                     var submissions = await db.Submissions
                         .Include(submission => submission.UserAccount)              // Include UserAccount entity to get info as in DTO
                         .Include(submission => submission.Assignment)               // Include Assignment entity to get info as in DTO
@@ -50,13 +54,16 @@ public class SubmissionEndpoints
                     logger.LogError(ex, "Failed to fetch submissions/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                     return Results.Problem("An error occurred while retrieving submissions.");
                 }
-            });
+            }).RequireAuthorization();
 
             // Get a specific submission
-            submission.MapGet("/{id}", async (int id, HMS_Context db) => 
+            submission.MapGet("/{id}", async (int id, HMS_Context db, ClaimsPrincipal account) => 
             {
                 try
                 {
+                    if(VerifyAdminLecturerClaim(account)== false) // Check if the user has the Admin or Lecturer role using HasClaim
+                        return Results.Forbid(); // Return 403 Forbidden if neither role
+
                     if (id < 1)
                     {
                         logger.LogWarning("Invalid ID provided: {Id}. ID must be greater than 0.", id);
@@ -80,11 +87,13 @@ public class SubmissionEndpoints
                     logger.LogError(ex, "Failed to fetch submission/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                     return Results.Problem("An error occurred while retrieving submission.");
                 }
-            }).WithName(GetSubmissionEndpointName);
+            }).RequireAuthorization().WithName(GetSubmissionEndpointName);
 
             // Post, create submission
-            submission.MapPost("/", async (CreateSubmissionDto newSubmission, HMS_Context db) => 
+            submission.MapPost("/", async (CreateSubmissionDto newSubmission, HMS_Context db, ClaimsPrincipal account) => 
             {
+                if(VerifyAdminStudentClaim(account)== false) // Check if the user has the Admin or student role using HasClaim
+                return Results.Forbid(); // Return 403 Forbidden if neither role
                 
                 if (newSubmission == null)
                 {
@@ -135,11 +144,13 @@ public class SubmissionEndpoints
                     logger.LogError(ex, "Failed to create submission.");
                     return Results.Problem("An error occurred while creating submission.");
                 }
-            });
+            }).RequireAuthorization();
 
             // Put = update submission
-            submission.MapPut("/{id}", async (int id, UpdateSubmissionDto updatedSubmission, HMS_Context db) =>
+            submission.MapPut("/{id}", async (int id, UpdateSubmissionDto updatedSubmission, HMS_Context db, ClaimsPrincipal account) =>
             {
+                if(VerifyAdminStudentClaim(account)== false) // Check if the user has the Admin or student role using HasClaim
+                    return Results.Forbid(); // Return 403 Forbidden if neither role
                 var existingSubmission = await db.Submissions.FindAsync(id);
 
                 if (existingSubmission == null) // Submission must exist
@@ -189,7 +200,7 @@ public class SubmissionEndpoints
                     logger.LogError(ex, "Failed to update submission with ID {Id}. Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                     return Results.Problem("An error occurred while updating submission.");
                 }
-            });
+            }).RequireAuthorization();
 
 
             // Delete submission
@@ -218,11 +229,14 @@ public class SubmissionEndpoints
                     logger.LogError(ex, "An error occurred while deleting submission with ID {Id}/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                     return Results.Problem("An error occurred while deleting the submission.");
                 }
-            });
+            }).RequireAuthorization("AdminPolicy");
 
 
-            submission.MapPost("/upload", async (HMS_Context db, HttpContext context, IFormFile file, [FromHeader(Name = "X-XSRF-TOKEN")] string? token, IAntiforgery antiforgery, int submissionId) =>
+            submission.MapPost("/upload", async (HMS_Context db, HttpContext context, IFormFile file, [FromHeader(Name = "X-XSRF-TOKEN")] string? token, IAntiforgery antiforgery, ClaimsPrincipal account, int submissionId) =>
             {
+                if(VerifyAdminStudentClaim(account)== false) // Check if the user has the Admin or student role using HasClaim
+                return Results.Forbid(); // Return 403 Forbidden if neither role
+
                 if (file is null)
                 {
                     logger.LogWarning("New upload has no values Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -282,14 +296,17 @@ public class SubmissionEndpoints
                 }
                 logger.LogError("File upload failed. Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.BadRequest("File upload failed.");
-            }).WithTags("SubmissionEndpoints");
+            }).RequireAuthorization().WithTags("SubmissionEndpoints");
 
 
             // Download a submission video
-            submission.MapGet("/download/{id}", async (int id, HMS_Context db) => 
+            submission.MapGet("/download/{id}", async (int id, HMS_Context db, ClaimsPrincipal account) => 
             {
                 try
                 {
+                    if(VerifyAdminLecturerClaim(account)== false) // Check if the user has the Admin or Lecturer role using HasClaim
+                    return Results.Forbid(); // Return 403 Forbidden if neither role
+
                     // Fetch the submission to get the video file path
                     var submission = await db.Submissions.FindAsync(id);
                     
@@ -318,12 +335,31 @@ public class SubmissionEndpoints
                     logger.LogError(ex, "Failed to download video for submission with ID {Id}.", id);
                     return Results.Problem("An error occurred while downloading the video.");
                 }
-            }).WithTags("SubmissionEndpoints");
-
-
-
+            }).RequireAuthorization().WithTags("SubmissionEndpoints");
 
         return submission;
+    }
+    private bool VerifyAdminLecturerClaim(ClaimsPrincipal user) // verify admin or lecturer
+    {
+        bool verify = false;
+        if (user.HasClaim(claim => 
+            claim.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" && 
+                (claim.Value == "Admin" || claim.Value == "Lecturer")))
+                {
+                    verify = true; 
+                }
+        return verify;
+    }
+    private bool VerifyAdminStudentClaim(ClaimsPrincipal user) // verify admin or lecturer
+    {
+        bool verify = false;
+        if (user.HasClaim(claim => 
+            claim.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" && 
+                (claim.Value == "Admin" || claim.Value == "Student")))
+                {
+                    verify = true; 
+                }
+        return verify;
     }
 }
 

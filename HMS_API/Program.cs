@@ -5,6 +5,8 @@ using HMS_API.Data;
 using HMS_API.Endpoints;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,12 +20,19 @@ builder.Services.AddSqlServer<HMS_Context>(conn)
 KestrelConfiguration.ConfigureKestrelLimits(builder.WebHost);
 
 
-builder.Logging.AddJsonConsole(options =>   // JSon format logs
+builder.Logging.AddJsonConsole(options =>   // logging information in terminal (Json)
 {
     options.JsonWriterOptions = new()
     {
         Indented = true
     };
+});
+
+// register authorization services
+builder.Services.AddAuthorization(options =>{
+    options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("LecturerPolicy", policy => policy.RequireRole("Lecturer"));
+    options.AddPolicy("StudentPolicy", policy => policy.RequireRole("Student"));
 });
 
 //configure jwt token services
@@ -44,26 +53,38 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = false
         };
-    });
+    }
+);
 
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options => {
+    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme{
+        Description = "Standard Authorization header using the Bearer scheme (\"bearer {token}\")",
+        In = ParameterLocation.Header,
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey
+    });
+    options.OperationFilter<SecurityRequirementsOperationFilter>();
+});
 
 // setting the name of XSRF token
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
 var app = builder.Build();
 
+app.UseRouting();
+
+app.UseAntiforgery();  // Add the Antiforgery middleware
+
 app.UseStatusCodePages();   // default response handler checking responses with status codes between 400 and 599 that do not have a body.
 app.UseExceptionHandler();  // catch exceptions, log them, and re-execute the request in an alternate pipeline.
 
-//app.MapGet("/", () => "Hello World!");
-
 //app.UseHttpLogging();           // log http requests & responses
 
-// Add the Antiforgery middleware
-app.UseAntiforgery();  // Add this line to include the middleware
+app.UseAuthentication(); // add authentication & authorization middleware to app
+app.UseAuthorization();
+
 
 // Create an instance of user, module, enrolment, assignment, submisson and feedback endpoints
 var userEndpoints = new UserAccountEndpoints(configuration);

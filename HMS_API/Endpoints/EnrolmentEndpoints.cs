@@ -25,7 +25,8 @@ public class EnrolmentEndpoints
     public RouteGroupBuilder MapEnrolmentEndpoints(WebApplication app)
     {
         var enrolment = app.MapGroup("enrolments")
-                           .WithParameterValidation();
+                           .WithParameterValidation()
+                           .RequireAuthorization();
 
         // Requests for all enrolments
         enrolment.MapGet("/", async (HMS_Context db) => {
@@ -46,7 +47,7 @@ public class EnrolmentEndpoints
                 logger.LogError(ex, "Failed to fetch enrolments/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Problem("An error occurred while retrieving enrolments.");
             }
-        });
+        }).RequireAuthorization("AdminPolicy");
 
         // Get a specific enrolment
         enrolment.MapGet("/{modId}/{studId}", async (int modId, int studId, HMS_Context db) => 
@@ -71,7 +72,7 @@ public class EnrolmentEndpoints
                 logger.LogInformation("Enrolment with ID {modId}, {studId} successfully retrieved/ Date/Time: {dateTime}.", modId, studId, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Ok(enrolment.ToEnrolmentDetailsDto());
 
-            }).WithName(GetEnrolmentEndpointName);
+            }).RequireAuthorization("AdminPolicy").WithName(GetEnrolmentEndpointName);
 
             // // Post: create enrolment
             enrolment.MapPost("/", async (CreateEnrolmentDto newEnrolment, HMS_Context db) => 
@@ -118,7 +119,7 @@ public class EnrolmentEndpoints
                     logger.LogError(ex, "Failed to create enrolment/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                     return Results.Problem("An error occurred while creating the enrolment.");
                 }
-            });
+            }).RequireAuthorization("AdminPolicy");
 
         // Put = update enrolment
         enrolment.MapPut("/{modId}/{studId}", async (int modId, int studId, UpdateEnrolmentDto updatedEnrolment, HMS_Context db) => 
@@ -149,7 +150,7 @@ public class EnrolmentEndpoints
                 logger.LogError(ex, "Failed to update enrolment with Module ID {ModId} and Student ID {StudId}/ Date/Time: {dateTime}.", modId, studId, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Problem("An error occurred while updating the enrolment.");
             }
-        });
+        }).RequireAuthorization("AdminPolicy");
 
         // Delete enrolment
         enrolment.MapDelete("/{modId}/{studId}", async (int modId, int studId, HMS_Context db) => 
@@ -174,7 +175,7 @@ public class EnrolmentEndpoints
                 logger.LogError(ex, "An error occurred while deleting enrolment with Module ID {ModId} and Student ID {StudId}/ Date/Time: {dateTime}.", modId, studId, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Problem("An error occurred while deleting the enrolment.");
             }
-        });
+        }).RequireAuthorization("AdminPolicy");
 
         return enrolment;
     }

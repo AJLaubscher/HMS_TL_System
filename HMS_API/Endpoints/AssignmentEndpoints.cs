@@ -1,4 +1,5 @@
 using System;
+using System.Security.Claims;
 using HMS_API.Data;
 using HMS_API.Dtos.assignment;
 using HMS_API.Entities;
@@ -25,21 +26,25 @@ public class AssignmentEndpoints
     public RouteGroupBuilder MapAssignmentEndpoints(WebApplication app)
     {
         var assignment = app.MapGroup("assignments")
-                            .WithParameterValidation();
+                            .WithParameterValidation()
+                            .RequireAuthorization();
 
         // Requests for all assignments
-        assignment.MapGet("/", async (HMS_Context db) => 
+        assignment.MapGet("/", async (HMS_Context db, ClaimsPrincipal account) => 
         {
             try
             {
-                    var assingments = await db.Assignments
-                                .Include(assignment => assignment.Module) // Include module entity to get info as in DTO
-                                .Select(assignment => assignment.ToAssignmentSummaryDto())
-                                .AsNoTracking() // Optimize query
-                                .ToListAsync(); // Asynchronous (async, await ToListAsync())
+                if(VerifyAdminLecturerClaim(account) == false) // Check if the user has the Admin or Lecturer role using HasClaim
+                    return Results.Forbid(); // Return 403 Forbidden if neither role
 
-                    logger.LogInformation("Successfully fetched {count} assignments.", assingments.Count);
-                    return Results.Ok(assingments);
+                var assingments = await db.Assignments
+                    .Include(assignment => assignment.Module) // Include module entity to get info as in DTO
+                    .Select(assignment => assignment.ToAssignmentSummaryDto())
+                    .AsNoTracking() // Optimize query
+                    .ToListAsync(); // Asynchronous (async, await ToListAsync())
+
+                logger.LogInformation("Successfully fetched {count} assignments.", assingments.Count);
+                return Results.Ok(assingments);
             }
             catch(Exception ex)
             {
@@ -50,8 +55,11 @@ public class AssignmentEndpoints
 
 
         // Get a specific assignment
-        assignment.MapGet("/{id}", async (int id, HMS_Context db) => {
-            try{
+        assignment.MapGet("/{id}", async (int id, HMS_Context db, ClaimsPrincipal account) => {
+            try
+            {
+                if(VerifyAdminLecturerClaim(account)== false) // Check if the user has the Admin or Lecturer role using HasClaim
+                    return Results.Forbid(); // Return 403 Forbidden if neither role
 
                 if (id < 1)
                 {
@@ -83,75 +91,81 @@ public class AssignmentEndpoints
 
 
 
-// Post, create assignment
-assignment.MapPost("/", async (CreateAssignmentDto newAssignment, HMS_Context db) => { 
-            
-    // Data validation
-    if (newAssignment == null)
-    {
-        logger.LogWarning("New assignment has no values.");
-        return Results.BadRequest("Invalid assignment data.");
-    }
+        // Post, create assignment
+        assignment.MapPost("/", async (CreateAssignmentDto newAssignment, HMS_Context db, ClaimsPrincipal account) => { 
 
-    DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+            if(VerifyAdminLecturerClaim(account)== false) // Check if the user has the Admin or Lecturer role using HasClaim
+                return Results.Forbid(); // Return 403 Forbidden if neither role 
 
-    if (newAssignment.OpenDate < currentDate)
-    {
-        logger.LogWarning("OpenDate is before the current system date.");
-        return Results.BadRequest("The open date must be today or later.");
-    }
+            // Data validation
+            if (newAssignment == null)
+            {
+                logger.LogWarning("New assignment has no values.");
+                return Results.BadRequest("Invalid assignment data.");
+            }
 
-    if (newAssignment.DueDate <= newAssignment.OpenDate)
-    {
-        logger.LogWarning("DueDate is not after the OpenDate.");
-        return Results.BadRequest("The due date must be after the open date.");
-    }
+            DateOnly currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
 
-    // Continue to pass data to database
-    try
-    {
-        Assignment assignment = newAssignment.ToEntity();
+            if (newAssignment.OpenDate < currentDate)
+            {
+                logger.LogWarning("OpenDate is before the current system date.");
+                return Results.BadRequest("The open date must be today or later.");
+            }
 
-        //force correct dates
-        assignment.Created = currentDate;
-        assignment.Modified = currentDate;
-        assignment.SubPath = "Wait for path";
+            if (newAssignment.DueDate <= newAssignment.OpenDate)
+            {
+                logger.LogWarning("DueDate is not after the OpenDate.");
+                return Results.BadRequest("The due date must be after the open date.");
+            }
 
-        // Save the assignment to generate the ID
-        db.Assignments.Add(assignment);
-        await db.SaveChangesAsync(); // This generates the Assignment ID
+            // Continue to pass data to database
+            try
+            {
+                Assignment assignment = newAssignment.ToEntity();
 
-        // Define the default base path (e.g., Documents\HMS_Assignments)
-        var baseDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HMS_Assignments");
+                //force correct dates
+                assignment.Created = currentDate;
+                assignment.Modified = currentDate;
+                assignment.SubPath = "Wait for path";
 
-        // after ID is generated, append it to the subpath
-        var modId = newAssignment.ModID; 
-        var fullPath = Path.Combine(baseDirectory, modId.ToString(), assignment.Id.ToString());
+                // Save the assignment to generate the ID
+                db.Assignments.Add(assignment);
+                await db.SaveChangesAsync(); // This generates the Assignment ID
 
-        // Ensure the directory exists
-        if (!Directory.Exists(fullPath))
-        {
-            Directory.CreateDirectory(fullPath);
-        }
+                // Define the default base path (e.g., Documents\HMS_Assignments)
+                var baseDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HMS_Assignments");
 
-        // Update the assignment with the new subpath and save the changes
-        assignment.SubPath = fullPath; // Assign the updated subpath
-        db.Assignments.Update(assignment); // Update the assignment in the database
-        await db.SaveChangesAsync();
+                // after ID is generated, append it to the subpath
+                var modId = newAssignment.ModID; 
+                var fullPath = Path.Combine(baseDirectory, modId.ToString(), assignment.Id.ToString());
 
-        logger.LogInformation("Assignment successfully created/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                // Ensure the directory exists
+                if (!Directory.Exists(fullPath))
+                {
+                    Directory.CreateDirectory(fullPath);
+                }
 
-        return Results.CreatedAtRoute(GetAssignmentEndpointName, new { id = assignment.Id }, assignment.ToAssignmentDetailsDto());
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Failed to create assignment/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-        return Results.Problem("An error occurred while creating the assignment.");
-    }
-});
+                // Update the assignment with the new subpath and save the changes
+                assignment.SubPath = fullPath; // Assign the updated subpath
+                db.Assignments.Update(assignment); // Update the assignment in the database
+                await db.SaveChangesAsync();
+
+                logger.LogInformation("Assignment successfully created/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                return Results.CreatedAtRoute(GetAssignmentEndpointName, new { id = assignment.Id }, assignment.ToAssignmentDetailsDto());
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to create assignment/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                return Results.Problem("An error occurred while creating the assignment.");
+            }
+        });
 
         // Put = update assignment
-        assignment.MapPut("/{id}", async (int id, UpdateAssignmentDto updatedAssignment, HMS_Context db) => {
+        assignment.MapPut("/{id}", async (int id, UpdateAssignmentDto updatedAssignment, HMS_Context db, ClaimsPrincipal account) => {
+
+            if(VerifyAdminLecturerClaim(account)== false) // Check if the user has the Admin or Lecturer role using HasClaim
+                return Results.Forbid(); // Return 403 Forbidden if neither role
 
             var existingAssignment = await db.Assignments.FindAsync(id);
 
@@ -218,9 +232,11 @@ assignment.MapPost("/", async (CreateAssignmentDto newAssignment, HMS_Context db
         });
 
         // Delete assignment
-        assignment.MapDelete("/{id}", async (int id, HMS_Context db) => {
+        assignment.MapDelete("/{id}", async (int id, HMS_Context db, ClaimsPrincipal account) => {
             try
             {
+                if(VerifyAdminLecturerClaim(account)== false) // Check if the user has the Admin or Lecturer role using HasClaim
+                    return Results.Forbid(); // Return 403 Forbidden if neither role
                 // Attempt to delete the assignment with the given ID
                 var rowsAffected = await db.Assignments.Where(assignment => assignment.Id == id)
                                                     .ExecuteDeleteAsync();
@@ -245,5 +261,16 @@ assignment.MapPost("/", async (CreateAssignmentDto newAssignment, HMS_Context db
         });
 
         return assignment;
+    }
+    private bool VerifyAdminLecturerClaim(ClaimsPrincipal user) // verify admin or lecturer
+    {
+        bool verify = false;
+        if (user.HasClaim(claim => 
+            claim.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" && 
+                (claim.Value == "Admin" || claim.Value == "Lecturer")))
+                {
+                    verify = true; // Return 403 Forbidden if neither role
+                }
+        return verify;
     }
 }

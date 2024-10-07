@@ -45,7 +45,7 @@ public class ModuleEndpoints
                 logger.LogError(ex, "Failed to fetch modules/ Date/Time: {dateTime}.", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Problem("An error occurred while retrieving modules.");
             }
-        });
+        }).RequireAuthorization("AdminPolicy");
 
 
         // Get a specific module
@@ -72,7 +72,7 @@ public class ModuleEndpoints
                 logger.LogInformation("Module with ID {Id} successfully retrieved/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Ok(module.ToModuleDetailsDto());
 
-            }).WithName(GetModuleEndpointName);
+            }).RequireAuthorization("AdminPolicy").WithName(GetModuleEndpointName);
             
 
 
@@ -100,7 +100,7 @@ public class ModuleEndpoints
                 logger.LogError(ex, "Failed to create module.");
                 return Results.Problem("An error occurred while creating the module.");
             }
-        });
+        }).RequireAuthorization("AdminPolicy");
 
         // Put = update module
         module.MapPut("/{id}", async (int id, UpdateModuleDto updatedModule, HMS_Context db) => 
@@ -134,7 +134,7 @@ public class ModuleEndpoints
                 logger.LogError(ex, "Failed to update module with ID {ModuleId}/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Problem("An error occurred while updating the module.");
             }
-        });
+        }).RequireAuthorization("AdminPolicy");
 
         // Delete module
         module.MapDelete("/{id}", async (int id, HMS_Context db) => 
@@ -159,7 +159,7 @@ public class ModuleEndpoints
                 logger.LogError(ex, "An error occurred while deleting module with ID {ModuleId}/ Date/Time: {dateTime}.", id, DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
                 return Results.Problem("An error occurred while deleting the module.");
             }
-        });
+        }).RequireAuthorization("AdminPolicy");
 
         return module;
     }
