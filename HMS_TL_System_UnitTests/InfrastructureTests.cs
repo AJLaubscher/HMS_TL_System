@@ -113,18 +113,18 @@ public class InfrastructureTests
 
 
         [JsonPropertyName("type")]
-        public string Type {get; set;}
+        public required string Type {get; set;}
 
         [JsonPropertyName("title")]
-        public string Title { get; set;}
+        public required string Title { get; set;}
 
         [JsonPropertyName("status")]
         public int Status { get; set;}
 
         [JsonPropertyName("detail")]
-        public string Detail {get ;set;}
+        public required string Detail {get ;set;}
 
-        public string ToString() {
+        public override string ToString() {
             return $"{Type}; {Title}; mapped with error {Status} --- {Detail}";
         }
     }

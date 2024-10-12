@@ -7,7 +7,8 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["HMS_API/HMS_API.csproj", "HMS_API/"]
+COPY ["HMS_API/HMS_API.csproj", "HMS_Api/"]
+COPY ["HMS_TL_System_UnitTests/HMS_TL_System_UnitTests.csproj", "HMS_TL_System_UnitTests/"]
 RUN dotnet restore "HMS_API/HMS_API.csproj"
 COPY . .
 WORKDIR "/src/HMS_API"
