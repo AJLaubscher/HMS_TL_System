@@ -268,7 +268,16 @@ public class UserAccountEndpoints
 
     private bool VerifyPassword(string password, string storedPassword)
     {
-        // return true/false
+        //return true/false
+
+        // bool verify = false;
+
+        // if (password == storedPassword)
+        // {
+        //      verify = true;
+        // }
+
+        // return verify;
         bool verify = BCrypt.Net.BCrypt.EnhancedVerify(password, storedPassword);
         return verify;
     }

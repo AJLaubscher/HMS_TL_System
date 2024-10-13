@@ -70,6 +70,12 @@ builder.Services.AddSwaggerGen(options => {
 
 // setting the name of XSRF token
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
+builder.Services.AddCors(o => {
+    o.AddPolicy(name: "AllowAll", policy => {
+        policy.AllowAnyOrigin();
+        policy.WithOrigins("http://localhost:5157").AllowAnyHeader().AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
