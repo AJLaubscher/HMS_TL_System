@@ -1,7 +1,7 @@
 # HMS_TL_System
 ## HMS T&L API System
 
-# HMS_TL_System Web app
+# HMS_TL_System Mobile App
 Unfortunately for the mobile app the folder was to large to check into the github repository. Here is the link to the google drive folder --> https://drive.google.com/drive/folders/17b_ATaNrNEyiTw0kc6w0dGFHvTIoytEe?usp=sharing 
 
 # Project Description:
